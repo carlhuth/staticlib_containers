@@ -24,7 +24,8 @@
 #ifndef STATICLIB_CONTAINERS_HPP
 #define	STATICLIB_CONTAINERS_HPP
 
-
+#include "staticlib/containers/blocking_queue.hpp"
+#include "staticlib/containers/producer_consumer_queue.hpp"
 
 #endif	/* STATICLIB_CONTAINERS_HPP */
 
