@@ -36,7 +36,7 @@ namespace { // anonymous
 
 namespace sc = staticlib::containers;
 
-const size_t ELEMENTS_COUNT = 1 << 10;
+const uint32_t ELEMENTS_COUNT = 1 << 10;
 
 template<typename T>
 std::string to_string(T t) {
