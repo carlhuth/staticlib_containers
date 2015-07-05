@@ -112,7 +112,6 @@ public:
             return res;
         } else {
             empty_cv.wait(lock, [this]{return !this->delegate.empty();});
-            assert(!delegate.empty());
             T res = std::move(delegate.front());
             delegate.pop_front();
             return res;
