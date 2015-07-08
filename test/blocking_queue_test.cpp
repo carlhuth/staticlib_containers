@@ -182,7 +182,38 @@ void test_poll() {
         (void) success; assert(!success);
     });
     consumer.join();
+}
 
+void test_poll_wait() {
+    sc::blocking_queue<MyMovableStr> queue{};
+    std::thread producer([&queue] {
+        std::this_thread::sleep_for(std::chrono::milliseconds{200});
+        queue.emplace("aaa");
+        std::this_thread::sleep_for(std::chrono::milliseconds{200});
+        queue.emplace("bbb");
+    });
+    std::thread consumer([&queue] {
+        // not yet available
+        MyMovableStr el1{""};
+        bool success1 = queue.poll(el1, 100);
+        (void) success1; assert(!success1);
+        assert("" == el1.get_val());
+        // first received
+        MyMovableStr el2{""};
+        bool success2 = queue.poll(el2, 150);
+        (void) success2; assert(success2);
+        assert("aaa" == el2.get_val());
+        // wait for next
+        std::this_thread::sleep_for(std::chrono::milliseconds{200});
+        // should be already there
+        MyMovableStr el3{""};
+        bool success3 = queue.poll(el3, 10);
+        (void) success3; assert(success3);
+        assert("bbb" == el3.get_val());
+    });
+
+    producer.join();
+    consumer.join();
 }
 
 void test_threshold() {
@@ -214,6 +245,7 @@ int main() {
     test_intermittent();
     test_multi();
     test_poll();
+    test_poll_wait();
     test_threshold();
 
     return 0;

@@ -28,6 +28,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <deque>
+#include <chrono>
 #include <cstdint>
 
 namespace staticlib {
@@ -119,10 +120,11 @@ public:
     }
 
     /**
-     * Attempt to read the value at the front to the queue into a variable
+     * Attempt to read the value at the front to the queue into a variable.
+     * This method returns immediately.
      * 
      * @param record move (or copy) the value at the front of the queue to given variable
-     * @return  returns false if queue was empty, true otherwise
+     * @return returns false if queue was empty, true otherwise
      */
     bool poll(T& record) {
         std::lock_guard<std::mutex> guard{mutex};
@@ -132,6 +134,34 @@ public:
             return true;
         } else {
             return false;
+        }
+    }
+    
+    /**
+     * Attempt to read the value at the front to the queue into a variable.
+     * This method will wait on empty queue up to specified amount of milliseconds
+     * 
+     * @param record move (or copy) the value at the front of the queue to given variable
+     * @param timeout_millis max amount of milliseconds to wait on empty queue
+     * @return returns false if queue was empty after timeout, true otherwise
+     */
+    bool poll(T& record, uint32_t timeout_millis) {
+        std::unique_lock<std::mutex> lock{mutex};
+        if (!delegate.empty()) {
+            record = std::move(delegate.front());
+            delegate.pop_front();
+            return true;
+        } else {
+            empty_cv.wait_for(lock, std::chrono::milliseconds{timeout_millis}, [this] {
+                return !this->delegate.empty();
+            });
+            if (!delegate.empty()) {
+                record = std::move(delegate.front());
+                delegate.pop_front();
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 

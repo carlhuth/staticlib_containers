@@ -24,4 +24,8 @@ Changelog
 
 **2015-07-05**
 
+* 1.1.0, added `poll` with timeout to `blocking_queue`
+
+**2015-07-05**
+
  * 1.0.0, initial public version
