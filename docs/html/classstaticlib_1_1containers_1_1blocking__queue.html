@@ -23,7 +23,7 @@
   <td id="projectlogo"><img alt="Logo" src="logo.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">staticlib_containers
-   &#160;<span id="projectnumber">1.0.0</span>
+   &#160;<span id="projectnumber">1.1.0</span>
    </div>
   </td>
  </tr>
@@ -116,6 +116,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a5e558aae7732e05e6a35d1e7d6e4581b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove and return element from the front of the queue, will block until queue became non-empty.  <a href="#a5e558aae7732e05e6a35d1e7d6e4581b"></a><br/></td></tr>
 <tr class="memitem:a67709b45382312eadddfd9d627dbf2d5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstaticlib_1_1containers_1_1blocking__queue.html#a67709b45382312eadddfd9d627dbf2d5">poll</a> (T &amp;record)</td></tr>
 <tr class="memdesc:a67709b45382312eadddfd9d627dbf2d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempt to read the value at the front to the queue into a variable.  <a href="#a67709b45382312eadddfd9d627dbf2d5"></a><br/></td></tr>
+<tr class="memitem:a61506a640e8361125c8b7fc56ae5636b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstaticlib_1_1containers_1_1blocking__queue.html#a61506a640e8361125c8b7fc56ae5636b">poll</a> (T &amp;record, uint32_t timeout_millis)</td></tr>
+<tr class="memdesc:a61506a640e8361125c8b7fc56ae5636b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attempt to read the value at the front to the queue into a variable.  <a href="#a61506a640e8361125c8b7fc56ae5636b"></a><br/></td></tr>
 <tr class="memitem:a174c696344983cf779ff7b98d3954078"><td class="memItemLeft" align="right" valign="top">T *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstaticlib_1_1containers_1_1blocking__queue.html#a174c696344983cf779ff7b98d3954078">front_ptr</a> ()</td></tr>
 <tr class="memdesc:a174c696344983cf779ff7b98d3954078"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve a pointer to the item at the front of the queue.  <a href="#a174c696344983cf779ff7b98d3954078"></a><br/></td></tr>
 <tr class="memitem:ac40cb0cc6c8b9d484d8eec656db87d77"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classstaticlib_1_1containers_1_1blocking__queue.html#ac40cb0cc6c8b9d484d8eec656db87d77">is_empty</a> () const </td></tr>
@@ -330,6 +332,7 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Attempt to read the value at the front to the queue into a variable. </p>
+<p>This method returns immediately.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">record</td><td>move (or copy) the value at the front of the queue to given variable </td></tr>
@@ -337,6 +340,53 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>returns false if queue was empty, true otherwise </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a61506a640e8361125c8b7fc56ae5636b"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classstaticlib_1_1containers_1_1blocking__queue.html">staticlib::containers::blocking_queue</a>&lt; T &gt;::poll </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&#160;</td>
+          <td class="paramname"><em>record</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&#160;</td>
+          <td class="paramname"><em>timeout_millis</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Attempt to read the value at the front to the queue into a variable. </p>
+<p>This method will wait on empty queue up to specified amount of milliseconds</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">record</td><td>move (or copy) the value at the front of the queue to given variable </td></tr>
+    <tr><td class="paramname">timeout_millis</td><td>max amount of milliseconds to wait on empty queue </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>returns false if queue was empty after timeout, true otherwise </dd></dl>
 
 </div>
 </div>
@@ -408,7 +458,7 @@ template&lt;typename T &gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Sun Jul 5 2015 18:01:03 for staticlib_containers by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Wed Jul 8 2015 22:03:47 for staticlib_containers by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.1.2
 </small></address>
