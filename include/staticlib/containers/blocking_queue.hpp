@@ -99,27 +99,6 @@ public:
     }
 
     /**
-     * Remove and return element from the front of the queue,
-     * will block until queue became non-empty
-     * 
-     * @param record move (or copy) the value at the front of the queue to given variable
-     * @return  returns value from queue front
-     */
-    T take() {
-        std::unique_lock<std::mutex> lock{mutex};
-        if (!delegate.empty()) {
-            T res = std::move(delegate.front());
-            delegate.pop_front();
-            return res;
-        } else {
-            empty_cv.wait(lock, [this]{return !this->delegate.empty();});
-            T res = std::move(delegate.front());
-            delegate.pop_front();
-            return res;
-        }
-    }
-
-    /**
      * Attempt to read the value at the front to the queue into a variable.
      * This method returns immediately.
      * 
@@ -136,25 +115,32 @@ public:
             return false;
         }
     }
-    
+
     /**
      * Attempt to read the value at the front to the queue into a variable.
-     * This method will wait on empty queue up to specified amount of milliseconds
+     * This method will wait on empty queue infinitely (by default), 
+     * or up to specified amount of milliseconds
      * 
      * @param record move (or copy) the value at the front of the queue to given variable
-     * @param timeout_millis max amount of milliseconds to wait on empty queue
+     * @param timeout_millis max amount of milliseconds to wait on empty queue,
+     *        negative value (supplied by default) will cause infinite wait
      * @return returns false if queue was empty after timeout, true otherwise
      */
-    bool poll(T& record, uint32_t timeout_millis) {
+    bool take(T& record, int32_t timeout_millis=-1) {
         std::unique_lock<std::mutex> lock{mutex};
         if (!delegate.empty()) {
             record = std::move(delegate.front());
             delegate.pop_front();
             return true;
         } else {
-            empty_cv.wait_for(lock, std::chrono::milliseconds{timeout_millis}, [this] {
+            auto predicate = [this] {
                 return !this->delegate.empty();
-            });
+            };
+            if (timeout_millis >= 0) {
+                empty_cv.wait_for(lock, std::chrono::milliseconds{timeout_millis}, predicate);
+            } else {
+                empty_cv.wait(lock, predicate);
+            }
             if (!delegate.empty()) {
                 record = std::move(delegate.front());
                 delegate.pop_front();
@@ -162,6 +148,18 @@ public:
             } else {
                 return false;
             }
+        }
+    }
+    
+    /**
+     * Unblocks all consumers waiting on empty queue, 
+     * all pending "poll" calls will return with "false" result.
+     * If queue is not empty this method does nothing
+     */
+    void unblock() {
+        std::lock_guard<std::mutex> guard{mutex};
+        if (delegate.empty()) {
+            empty_cv.notify_all();
         }
     }
 

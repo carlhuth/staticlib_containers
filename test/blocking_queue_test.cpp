@@ -89,7 +89,9 @@ void test_take() {
     }
     std::thread consumer([&]{
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
-            auto el = queue.take();
+            MyMovableStr el{""};
+            bool success = queue.take(el);
+            (void) success; assert(success);
             assert(el.get_val() == data[i]);
         }
     });
@@ -117,8 +119,10 @@ void test_intermittent() {
     });
     std::thread consumer([&] {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
-            auto el = queue.take();
-            (void) el; assert(42 == el.get_val().size());
+            MyMovableStr el{""};
+            bool success = queue.take(el);
+            (void) success; assert(success);
+            assert(42 == el.get_val().size());
         }
     });
     producer.join();
@@ -129,8 +133,9 @@ void test_multi() {
     sc::blocking_queue<MyMovableStr> queue{};
     auto take = [&](size_t count) {
         for (size_t i = 0; i < count; i++) {
-            auto el = queue.take();
-            (void) el;
+            MyMovableStr el{""};
+            bool success = queue.take(el);
+            (void) success; assert(success);
             assert(42 == el.get_val().size());
         }
     };
@@ -184,7 +189,7 @@ void test_poll() {
     consumer.join();
 }
 
-void test_poll_wait() {
+void test_take_wait() {
     sc::blocking_queue<MyMovableStr> queue{};
     std::thread producer([&queue] {
         std::this_thread::sleep_for(std::chrono::milliseconds{200});
@@ -195,19 +200,19 @@ void test_poll_wait() {
     std::thread consumer([&queue] {
         // not yet available
         MyMovableStr el1{""};
-        bool success1 = queue.poll(el1, 100);
+        bool success1 = queue.take(el1, 100);
         (void) success1; assert(!success1);
         assert("" == el1.get_val());
         // first received
         MyMovableStr el2{""};
-        bool success2 = queue.poll(el2, 150);
+        bool success2 = queue.take(el2, 150);
         (void) success2; assert(success2);
         assert("aaa" == el2.get_val());
         // wait for next
         std::this_thread::sleep_for(std::chrono::milliseconds{200});
         // should be already there
         MyMovableStr el3{""};
-        bool success3 = queue.poll(el3, 10);
+        bool success3 = queue.take(el3, 10);
         (void) success3; assert(success3);
         assert("bbb" == el3.get_val());
     });
@@ -229,12 +234,28 @@ void test_threshold() {
     (void) emplaced; assert(!emplaced);
     std::thread consumer([&] {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
-            auto el = queue.take();
+            MyMovableStr el{""};
+            bool success = queue.take(el);
+            (void) success; assert(success);
             assert(el.get_val() == data[i]);
         }
         auto ptr = queue.front_ptr();
         (void) ptr; assert(nullptr == ptr);
     });
+    consumer.join();
+}
+
+void test_unblock() {
+    sc::blocking_queue<MyMovableStr> queue{};
+    std::thread consumer([&] {
+        MyMovableStr el{""};
+        bool success = queue.poll(el);
+        (void) success; assert(!success);
+        assert(el.get_val() == "");
+    });
+    // ensure lock
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    queue.unblock();
     consumer.join();
 }
 
@@ -245,8 +266,9 @@ int main() {
     test_intermittent();
     test_multi();
     test_poll();
-    test_poll_wait();
+    test_take_wait();
     test_threshold();
+    test_unblock();
 
     return 0;
 }
