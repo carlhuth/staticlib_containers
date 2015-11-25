@@ -39,6 +39,7 @@
 #define STATICLIB_CONTAINERS_PRODUCER_CONSUMER_QUEUE_HPP
 
 #include <atomic>
+#include <new>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
