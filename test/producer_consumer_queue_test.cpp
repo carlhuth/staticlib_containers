@@ -154,8 +154,7 @@ struct CorrectnessTest {
                     // there should still be more data sitting in the queue even
                     // though the producer thread exited.
                     if (!queue_.poll(data)) {
-                        slassert(false); // Finished too early ...
-                        return;
+                        throw staticlib::config::AssertException(TRACEMSG("Finished too early ..."));
                     }
                 } else {
                     goto again;
