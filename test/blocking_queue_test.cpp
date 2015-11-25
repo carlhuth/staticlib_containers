@@ -21,18 +21,15 @@
  * Created on July 2, 2015, 11:08 PM
  */
 
+#include "staticlib/containers/blocking_queue.hpp"
+
 #include <iostream>
 #include <string>
 #include <thread>
-#include <chrono>
 #include <vector>
 #include <sstream>
-#include <cstdint>
-#include <cassert>
 
-#include "staticlib/containers/blocking_queue.hpp"
-
-namespace { // anonymous
+#include "staticlib/config/assert.hpp"
 
 namespace sc = staticlib::containers;
 
@@ -91,8 +88,8 @@ void test_take() {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
             MyMovableStr el{""};
             bool success = queue.take(el);
-            (void) success; assert(success);
-            assert(el.get_val() == data[i]);
+            slassert(success);
+            slassert(el.get_val() == data[i]);
         }
     });
     consumer.join();
@@ -121,8 +118,8 @@ void test_intermittent() {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
             MyMovableStr el{""};
             bool success = queue.take(el);
-            (void) success; assert(success);
-            assert(42 == el.get_val().size());
+            slassert(success);
+            slassert(42 == el.get_val().size());
         }
     });
     producer.join();
@@ -135,8 +132,8 @@ void test_multi() {
         for (size_t i = 0; i < count; i++) {
             MyMovableStr el{""};
             bool success = queue.take(el);
-            (void) success; assert(success);
-            assert(42 == el.get_val().size());
+            slassert(success);
+            slassert(42 == el.get_val().size());
         }
     };
     auto put = [&](size_t count) {
@@ -179,12 +176,12 @@ void test_poll() {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
             MyMovableStr el{""};
             bool success = queue.poll(el);
-            (void) success; assert(success);
-            assert(el.get_val() == data[i]);
+            slassert(success);
+            slassert(el.get_val() == data[i]);
         }
         MyMovableStr el_fail{""};
         bool success = queue.poll(el_fail);
-        (void) success; assert(!success);
+        slassert(!success);
     });
     consumer.join();
 }
@@ -201,20 +198,20 @@ void test_take_wait() {
         // not yet available
         MyMovableStr el1{""};
         bool success1 = queue.take(el1, 100);
-        (void) success1; assert(!success1);
-        assert("" == el1.get_val());
+        slassert(!success1);
+        slassert("" == el1.get_val());
         // first received
         MyMovableStr el2{""};
         bool success2 = queue.take(el2, 150);
-        (void) success2; assert(success2);
-        assert("aaa" == el2.get_val());
+        slassert(success2);
+        slassert("aaa" == el2.get_val());
         // wait for next
         std::this_thread::sleep_for(std::chrono::milliseconds{200});
         // should be already there
         MyMovableStr el3{""};
         bool success3 = queue.take(el3, 10);
-        (void) success3; assert(success3);
-        assert("bbb" == el3.get_val());
+        slassert(success3);
+        slassert("bbb" == el3.get_val());
     });
 
     producer.join();
@@ -231,16 +228,16 @@ void test_threshold() {
         queue.emplace(std::move(str));
     }
     bool emplaced = queue.emplace("");
-    (void) emplaced; assert(!emplaced);
+    slassert(!emplaced);
     std::thread consumer([&] {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
             MyMovableStr el{""};
             bool success = queue.take(el);
-            (void) success; assert(success);
-            assert(el.get_val() == data[i]);
+            slassert(success);
+            slassert(el.get_val() == data[i]);
         }
         auto ptr = queue.front_ptr();
-        (void) ptr; assert(nullptr == ptr);
+        slassert(nullptr == ptr);
     });
     consumer.join();
 }
@@ -250,8 +247,8 @@ void test_unblock() {
     std::thread consumer([&] {
         MyMovableStr el{""};
         bool success = queue.poll(el);
-        (void) success; assert(!success);
-        assert(el.get_val() == "");
+        slassert(!success);
+        slassert(el.get_val() == "");
     });
     // ensure lock
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
@@ -259,17 +256,19 @@ void test_unblock() {
     consumer.join();
 }
 
-} // namespace
-
 int main() {
-    test_take();
-    test_intermittent();
-    test_multi();
-    test_poll();
-    test_take_wait();
-    test_threshold();
-    test_unblock();
-
+    try {
+        test_take();
+        test_intermittent();
+        test_multi();
+        test_poll();
+        test_take_wait();
+        test_threshold();
+        test_unblock();
+    } catch (const std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return 1;
+    }
     return 0;
 }
 

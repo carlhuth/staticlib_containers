@@ -21,14 +21,14 @@
  * Created on July 2, 2015, 3:20 PM
  */
 
-#ifndef STATICLIB_BLOCKING_QUEUE_HPP
-#define	STATICLIB_BLOCKING_QUEUE_HPP
+#ifndef STATICLIB_CONTAINERS_BLOCKING_QUEUE_HPP
+#define	STATICLIB_CONTAINERS_BLOCKING_QUEUE_HPP
 
 #include <atomic>
-#include <mutex>
+#include <chrono>
 #include <condition_variable>
 #include <deque>
-#include <chrono>
+#include <mutex>
 #include <cstdint>
 
 namespace staticlib {
@@ -213,5 +213,5 @@ public:
 } // namespace
 
 
-#endif	/* STATICLIB_BLOCKING_QUEUE_HPP */
+#endif	/* STATICLIB_CONTAINERS_BLOCKING_QUEUE_HPP */
 

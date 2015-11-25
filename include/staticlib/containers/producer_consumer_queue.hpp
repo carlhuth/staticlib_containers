@@ -35,15 +35,14 @@
 
 // source: https://github.com/facebook/folly/blob/b75ef0a0af48766298ebcc946dd31fe0da5161e3/folly/ProducerConsumerQueue.h
 
-#ifndef STATICLIB_PRODUCER_CONSUMER_QUEUE_HPP
-#define STATICLIB_PRODUCER_CONSUMER_QUEUE_HPP
+#ifndef STATICLIB_CONTAINERS_PRODUCER_CONSUMER_QUEUE_HPP
+#define STATICLIB_CONTAINERS_PRODUCER_CONSUMER_QUEUE_HPP
 
 #include <atomic>
-#include <cassert>
-#include <cstdlib>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <cstdlib>
 
 namespace staticlib {
 namespace containers {
@@ -96,7 +95,7 @@ public:
     records_(static_cast<T*> (std::malloc(sizeof (T) * size))), 
     readIndex_(0), 
     writeIndex_(0) {
-        assert(size >= 2);
+//        assert(size >= 2);
         if (!records_) {
             throw std::bad_alloc();
         }
@@ -235,4 +234,4 @@ public:
 }
 } //namespace
 
-#endif /* STATICLIB_PRODUCER_CONSUMER_QUEUE_HPP */
+#endif /* STATICLIB_CONTAINERS_PRODUCER_CONSUMER_QUEUE_HPP */

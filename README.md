@@ -1,4 +1,4 @@
-Staticlibs containers library
+Staticlibs Containers library
 =============================
 
 This project is a part of [Staticlibs](http://staticlibs.net/).
@@ -10,9 +10,9 @@ from [facebook/folly](https://github.com/facebook/folly/blob/b75ef0a0af48766298e
  - `blocking_queue` optionally bounded growing FIFO blocking queue with support for blocking and 
 non-blocking multiple consumers and always non-blocking multiple producers
 
-This library is header-only.
+This library is header-only and has no dependencies.
 
-Link to [API documentation](http://staticlibs.github.io/staticlib_containers/docs/html/namespacestaticlib_1_1containers.html).
+Link to the [API documentation](http://staticlibs.github.io/staticlib_containers/docs/html/namespacestaticlib_1_1containers.html).
 
 License information
 -------------------
@@ -21,6 +21,12 @@ This project is released under the [Apache License 2.0](http://www.apache.org/li
 
 Changelog
 ---------
+
+**2015-11-25**
+
+ * version 1.2.2
+ * headers ordering
+ * tests cleanup
 
 **2015-11-06**
 

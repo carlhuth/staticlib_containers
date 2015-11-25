@@ -23,18 +23,16 @@
 
 // source: https://github.com/facebook/folly/blob/b75ef0a0af48766298ebcc946dd31fe0da5161e3/folly/test/ProducerConsumerQueueTest.cpp
 
-#include <cassert>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <atomic>
-#include <chrono>
-#include <memory>
-#include <thread>
-
 #include "staticlib/containers/producer_consumer_queue.hpp"
 
-namespace { // anonymous
+#include <iostream>
+#include <chrono>
+#include <memory>
+#include <string>
+#include <thread>
+#include <vector>
+
+#include "staticlib/config/assert.hpp"
 
 namespace sc = staticlib::containers;
 
@@ -156,7 +154,7 @@ struct CorrectnessTest {
                     // there should still be more data sitting in the queue even
                     // though the producer thread exited.
                     if (!queue_.poll(data)) {
-                        assert(false); // Finished too early ...
+                        slassert(false); // Finished too early ...
                         return;
                     }
                 } else {
@@ -164,7 +162,7 @@ struct CorrectnessTest {
                 }
             }
             (void) expect;
-            assert(data == expect);
+            slassert(data == expect);
         }
     }
 };
@@ -211,58 +209,59 @@ void test_Destructor() {
     {
         sc::producer_consumer_queue<DtorChecker> queue(1024);
         for (int i = 0; i < 10; ++i) {
-            assert(queue.emplace(DtorChecker()));
+            slassert(queue.emplace(DtorChecker()));
         }
-        assert(DtorChecker::numInstances == 10);
+        slassert(DtorChecker::numInstances == 10);
         {
             DtorChecker ignore;
-            assert(queue.poll(ignore));
-            assert(queue.poll(ignore));
+            slassert(queue.poll(ignore));
+            slassert(queue.poll(ignore));
         }
-        assert(DtorChecker::numInstances == 8);
+        slassert(DtorChecker::numInstances == 8);
     }
-    assert(DtorChecker::numInstances == 0);
+    slassert(DtorChecker::numInstances == 0);
     // Test the same thing in the case that the queue write pointer has
     // wrapped, but the read one hasn't.
     {
         sc::producer_consumer_queue<DtorChecker> queue(4);
         for (int i = 0; i < 3; ++i) {
-            assert(queue.emplace(DtorChecker()));
+            slassert(queue.emplace(DtorChecker()));
         }
-        assert(DtorChecker::numInstances == 3);
+        slassert(DtorChecker::numInstances == 3);
         {
             DtorChecker ignore;
-            assert(queue.poll(ignore));
+            slassert(queue.poll(ignore));
         }
-        assert(DtorChecker::numInstances == 2);
-        assert(queue.emplace(DtorChecker()));
-        assert(DtorChecker::numInstances == 3);
+        slassert(DtorChecker::numInstances == 2);
+        slassert(queue.emplace(DtorChecker()));
+        slassert(DtorChecker::numInstances == 3);
     }
-    assert(DtorChecker::numInstances == 0);
+    slassert(DtorChecker::numInstances == 0);
 }
 
 void test_EmptyFull() {
     sc::producer_consumer_queue<int> queue(3);
-    assert(queue.is_empty());
-    assert(!queue.is_full());
-    assert(queue.emplace(1));
-    assert(!queue.is_empty());
-    assert(!queue.is_full());
-    assert(queue.emplace(2));
-    assert(!queue.is_empty());
-    assert(queue.is_full()); // Tricky: full after 2 writes, not 3.
-    assert(!queue.emplace(3));
-    assert(queue.size_guess() == 2);
-}
-
+    slassert(queue.is_empty());
+    slassert(!queue.is_full());
+    slassert(queue.emplace(1));
+    slassert(!queue.is_empty());
+    slassert(!queue.is_full());
+    slassert(queue.emplace(2));
+    slassert(!queue.is_empty());
+    slassert(queue.is_full()); // Tricky: full after 2 writes, not 3.
+    slassert(!queue.emplace(3));
+    slassert(queue.size_guess() == 2);
 }
 
 int main() {
-    test_QueueCorrectness();
-    test_PerfTest();
-    test_Destructor();
-    test_EmptyFull();
-    
+    try {
+        test_QueueCorrectness();
+        test_PerfTest();
+        test_Destructor();
+        test_EmptyFull();
+    } catch (const std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return 1;
+    }
     return 0;
 }
-
