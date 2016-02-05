@@ -35,14 +35,14 @@ namespace staticlib {
 namespace containers {
 
 /**
- * Optionally bounded FIFO queue implementation with synchronised access to all 
+ * Optionally bounded FIFO queue implementation with synchronized access to all 
  * public methods. Supports multiple producers and multiple consumers.
  * Consumers will block on "take" from empty queue.
  */
 template<typename T>
 class blocking_queue { 
     std::deque<T> delegate;
-    std::mutex mutex;
+    mutable std::mutex mutex;
     uint32_t max_size;
     std::condition_variable empty_cv;
 

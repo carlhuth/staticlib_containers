@@ -256,6 +256,25 @@ void test_unblock() {
     consumer.join();
 }
 
+void test_integral() {
+    sc::blocking_queue<int> queue{};
+    int a = 42;
+    int b = 43;
+    int& b_ref = b;
+    queue.emplace(41);
+    queue.emplace(a);
+    queue.emplace(b_ref);
+    slassert(3 == queue.size());
+    int taken;
+    slassert(queue.poll(taken));
+    slassert(41 == taken);
+    slassert(queue.poll(taken));
+    slassert(42 == taken);
+    slassert(queue.poll(taken));
+    slassert(43 == taken);
+    slassert(!queue.poll(taken));
+}
+
 int main() {
     try {
         test_take();
@@ -265,6 +284,7 @@ int main() {
         test_take_wait();
         test_threshold();
         test_unblock();
+        test_integral();
     } catch (const std::exception& e) {
         std::cout << e.what() << std::endl;
         return 1;
