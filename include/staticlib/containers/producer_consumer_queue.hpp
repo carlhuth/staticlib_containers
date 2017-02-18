@@ -38,12 +38,13 @@
 #ifndef STATICLIB_CONTAINERS_PRODUCER_CONSUMER_QUEUE_HPP
 #define STATICLIB_CONTAINERS_PRODUCER_CONSUMER_QUEUE_HPP
 
+#include <cstdlib>
 #include <atomic>
+#include <memory>
 #include <new>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
-#include <cstdlib>
 
 namespace staticlib {
 namespace containers {
@@ -85,15 +86,12 @@ public:
     
     /**
      * Constructor,
-     * note that the number of usable slots in the queue at any
-     * given time is actually (size-1), so if you start with an empty queue,
-     * isFull() will return true after size-1 insertions.
      * 
-     * @param size queue size, must be >= 2
+     * @param size queue size, must be >= 1
      */
     explicit producer_consumer_queue(uint32_t size) : 
-    size_(size), 
-    records_(static_cast<T*> (std::malloc(sizeof (T) * size))), 
+    size_(size + 1), 
+    records_(static_cast<T*> (std::malloc(sizeof (T) * (size + 1)))), 
     readIndex_(0), 
     writeIndex_(0) {
 //        assert(size >= 2);
@@ -229,6 +227,15 @@ public:
             ret += size_;
         }
         return ret;
+    }
+    
+    /**
+     * Accessor for max queue size specified at creation
+     * 
+     * @return max queue size
+     */
+    size_t max_size() const {
+        return size_ - 1;
     }
 };
 

@@ -154,7 +154,7 @@ struct CorrectnessTest {
                     // there should still be more data sitting in the queue even
                     // though the producer thread exited.
                     if (!queue_.poll(data)) {
-                        throw staticlib::config::AssertException(TRACEMSG("Finished too early ..."));
+                        throw staticlib::config::assert_exception(TRACEMSG("Finished too early ..."));
                     }
                 } else {
                     goto again;
@@ -247,9 +247,9 @@ void test_EmptyFull() {
     slassert(!queue.is_full());
     slassert(queue.emplace(2));
     slassert(!queue.is_empty());
-    slassert(queue.is_full()); // Tricky: full after 2 writes, not 3.
-    slassert(!queue.emplace(3));
-    slassert(queue.size_guess() == 2);
+    slassert(queue.emplace(3));
+    slassert(queue.is_full());
+    slassert(queue.size_guess() == 3);
 }
 
 int main() {

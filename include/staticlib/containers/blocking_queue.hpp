@@ -24,12 +24,13 @@
 #ifndef STATICLIB_CONTAINERS_BLOCKING_QUEUE_HPP
 #define	STATICLIB_CONTAINERS_BLOCKING_QUEUE_HPP
 
+#include <cstdint>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <mutex>
-#include <cstdint>
+#include <type_traits>
 
 namespace staticlib {
 namespace containers {
@@ -41,10 +42,11 @@ namespace containers {
  */
 template<typename T>
 class blocking_queue { 
-    std::deque<T> delegate;
     mutable std::mutex mutex;
-    uint32_t max_size;
     std::condition_variable empty_cv;
+    std::deque<T> delegate;
+    size_t max_size;
+    bool blocking = true;
 
     /**
      * Deleted copy constructor
@@ -73,7 +75,7 @@ public:
      * 
      * @param max_size queue size bound
      */
-    explicit blocking_queue(uint32_t max_size = 0) : 
+    blocking_queue(size_t max_size = 0) : 
     max_size(max_size) { }
 
     /**
@@ -82,7 +84,7 @@ public:
      * @param recordArgs constructor arguments for queue element
      * @return false if the queue was full, true otherwise
      */
-    template<class ...Args>
+    template<typename ...Args>
     bool emplace(Args&&... record_args) {
         std::lock_guard<std::mutex> guard{mutex};
         auto size = delegate.size();
@@ -96,6 +98,50 @@ public:
         } else {
             return false;
         }
+    }
+    
+    /**
+     * Emplace the values from specified range into
+     * this queue
+     * 
+     * @param range source range
+     * @return number of elements emplaced
+     */
+    template<typename Range,
+            class = typename std::enable_if<!std::is_lvalue_reference<Range>::value>::type>
+    size_t emplace_range(Range&& range) {
+        std::lock_guard<std::mutex> guard{mutex};
+        auto size = delegate.size();
+        for (auto&& el : range) {
+            if (0 == max_size || size < max_size) {
+                delegate.emplace_back(std::move(el));
+                size += 1;
+            } else {
+                break;
+            }
+        }
+        return delegate.size() - size;
+    }
+
+    /**
+     * Emplace the values from specified range into
+     * this queue
+     * 
+     * @param range source range
+     * @return number of elements emplaced
+     */
+    template<typename Range>
+    size_t emplace_range(Range& range) {
+        std::lock_guard<std::mutex> guard{mutex};
+        auto origin_size = delegate.size();
+        for (auto& el : range) {
+            if (0 == max_size || delegate.size() < max_size) {
+                delegate.emplace_back(el);
+            } else {
+                break;
+            }
+        }
+        return delegate.size() - origin_size;
     }
 
     /**
@@ -117,7 +163,27 @@ public:
     }
 
     /**
-     * Attempt to read the value at the front to the queue into a variable.
+     * Consume all the contents of this queue into
+     * specified functor
+     * 
+     * @param func functor to consume contents
+     * @return number of elements consumed
+     */
+    template<typename Func>
+    size_t consume(Func func) {
+        std::lock_guard<std::mutex> guard{mutex};
+        size_t count = 0;
+        while(!delegate.empty()) {
+            T record = std::move(delegate.front());
+            delegate.pop_front();
+            func(std::move(record));
+            count += 1;
+        }
+        return count;
+    }
+
+    /**
+     * Attempt to read the value at the front of the queue into a variable.
      * This method will wait on empty queue infinitely (by default), 
      * or up to specified amount of milliseconds
      * 
@@ -134,7 +200,7 @@ public:
             return true;
         } else {
             auto predicate = [this] {
-                return !this->delegate.empty();
+                return !this->blocking || !this->delegate.empty();
             };
             if (timeout_millis >= 0) {
                 empty_cv.wait_for(lock, std::chrono::milliseconds{timeout_millis}, predicate);
@@ -152,29 +218,26 @@ public:
     }
     
     /**
-     * Unblocks all consumers waiting on empty queue, 
-     * all pending "poll" calls will return with "false" result.
-     * If queue is not empty this method does nothing
+     * Unblocks the queue allowing consumers to
+     * exit 'take' calls. Queue cannot be used
+     * for waiting on it after this call.
      */
     void unblock() {
         std::lock_guard<std::mutex> guard{mutex};
+        this->blocking = false;
         if (delegate.empty()) {
             empty_cv.notify_all();
         }
     }
-
+    
     /**
-     * Retrieve a pointer to the item at the front of the queue
+     * Checks whether this queue was unblocked
      * 
-     * @return a pointer to the item, nullptr if it is empty
+     * @return whether this queue was unblocked
      */
-    T* front_ptr() {
+    bool is_blocking() {
         std::lock_guard<std::mutex> guard{mutex};
-        if (!delegate.empty()) {
-            return &delegate.front();
-        } else {
-            return nullptr;
-        }
+        return blocking;
     }
 
     /**

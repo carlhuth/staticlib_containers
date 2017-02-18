@@ -42,7 +42,7 @@ std::string to_string(T t) {
     return ss.str();
 }
 
-class TestStringGenerator {
+class test_string_generator {
     uint32_t counter = 0;
     
 public:
@@ -51,24 +51,24 @@ public:
     }
 };
 
-class MyMovableStr {
+class my_movable_str {
     std::string val;
 public:
-    MyMovableStr(std::string val) : val(val) { }
+    my_movable_str(std::string val) : val(val) { }
 
     const std::string& get_val() const {
         return val;
     }
 
-    MyMovableStr(const MyMovableStr&) = delete;
-    MyMovableStr& operator=(const MyMovableStr&) = delete;
+    my_movable_str(const my_movable_str&) = delete;
+    my_movable_str& operator=(const my_movable_str&) = delete;
 
-    MyMovableStr(MyMovableStr&& other) :
+    my_movable_str(my_movable_str&& other) :
     val(other.val) {
         other.val = "";
     };
 
-    MyMovableStr& operator=(MyMovableStr&& other) {
+    my_movable_str& operator=(my_movable_str&& other) {
         this->val = other.val;
         other.val = "";
         return *this;
@@ -76,9 +76,9 @@ public:
 };
 
 void test_take() {
-    TestStringGenerator gen{};
+    test_string_generator gen{};
     std::vector<std::string> data{};
-    sc::blocking_queue<MyMovableStr> queue{};
+    sc::blocking_queue<my_movable_str> queue{};
     for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
         std::string str = gen.generate(42);
         data.push_back(str);
@@ -86,7 +86,7 @@ void test_take() {
     }
     std::thread consumer([&]{
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
-            MyMovableStr el{""};
+            my_movable_str el{""};
             bool success = queue.take(el);
             slassert(success);
             slassert(el.get_val() == data[i]);
@@ -96,9 +96,9 @@ void test_take() {
 }
 
 void test_intermittent() {
-    sc::blocking_queue<MyMovableStr> queue{};
+    sc::blocking_queue<my_movable_str> queue{};
     std::thread producer([&] {
-        TestStringGenerator gen{};
+        test_string_generator gen{};
         for (size_t i = 0; i < 10; i++) {
             std::string str = gen.generate(42);
             queue.emplace(std::move(str));
@@ -116,7 +116,7 @@ void test_intermittent() {
     });
     std::thread consumer([&] {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
-            MyMovableStr el{""};
+            my_movable_str el{""};
             bool success = queue.take(el);
             slassert(success);
             slassert(42 == el.get_val().size());
@@ -127,17 +127,17 @@ void test_intermittent() {
 }
 
 void test_multi() {
-    sc::blocking_queue<MyMovableStr> queue{};
+    sc::blocking_queue<my_movable_str> queue{};
     auto take = [&](size_t count) {
         for (size_t i = 0; i < count; i++) {
-            MyMovableStr el{""};
+            my_movable_str el{""};
             bool success = queue.take(el);
             slassert(success);
             slassert(42 == el.get_val().size());
         }
     };
     auto put = [&](size_t count) {
-        TestStringGenerator gen{};
+        test_string_generator gen{};
         for (size_t i = 0; i < count; i++) {
             std::string str = gen.generate(42);
             queue.emplace(std::move(str));
@@ -164,9 +164,9 @@ void test_multi() {
 }
 
 void test_poll() {
-    TestStringGenerator gen{};
+    test_string_generator gen{};
     std::vector<std::string> data{};
-    sc::blocking_queue<MyMovableStr> queue{};
+    sc::blocking_queue<my_movable_str> queue{};
     for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
         std::string str = gen.generate(42);
         data.push_back(str);
@@ -174,12 +174,12 @@ void test_poll() {
     }
     std::thread consumer([&] {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
-            MyMovableStr el{""};
+            my_movable_str el{""};
             bool success = queue.poll(el);
             slassert(success);
             slassert(el.get_val() == data[i]);
         }
-        MyMovableStr el_fail{""};
+        my_movable_str el_fail{""};
         bool success = queue.poll(el_fail);
         slassert(!success);
     });
@@ -187,7 +187,7 @@ void test_poll() {
 }
 
 void test_take_wait() {
-    sc::blocking_queue<MyMovableStr> queue{};
+    sc::blocking_queue<my_movable_str> queue{};
     std::thread producer([&queue] {
         std::this_thread::sleep_for(std::chrono::milliseconds{200});
         queue.emplace("aaa");
@@ -196,19 +196,19 @@ void test_take_wait() {
     });
     std::thread consumer([&queue] {
         // not yet available
-        MyMovableStr el1{""};
+        my_movable_str el1{""};
         bool success1 = queue.take(el1, 100);
         slassert(!success1);
         slassert("" == el1.get_val());
         // first received
-        MyMovableStr el2{""};
+        my_movable_str el2{""};
         bool success2 = queue.take(el2, 150);
         slassert(success2);
         slassert("aaa" == el2.get_val());
         // wait for next
         std::this_thread::sleep_for(std::chrono::milliseconds{200});
         // should be already there
-        MyMovableStr el3{""};
+        my_movable_str el3{""};
         bool success3 = queue.take(el3, 10);
         slassert(success3);
         slassert("bbb" == el3.get_val());
@@ -219,9 +219,9 @@ void test_take_wait() {
 }
 
 void test_threshold() {
-    TestStringGenerator gen{};
+    test_string_generator gen{};
     std::vector<std::string> data{};
-    sc::blocking_queue<MyMovableStr> queue{ELEMENTS_COUNT};
+    sc::blocking_queue<my_movable_str> queue{ELEMENTS_COUNT};
     for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
         std::string str = gen.generate(42);
         data.push_back(str);
@@ -231,21 +231,22 @@ void test_threshold() {
     slassert(!emplaced);
     std::thread consumer([&] {
         for (size_t i = 0; i < ELEMENTS_COUNT; i++) {
-            MyMovableStr el{""};
+            my_movable_str el{""};
             bool success = queue.take(el);
             slassert(success);
             slassert(el.get_val() == data[i]);
         }
-        auto ptr = queue.front_ptr();
-        slassert(nullptr == ptr);
+        my_movable_str dest{""};
+        auto got_it = queue.poll(dest);
+        slassert(!got_it);
     });
     consumer.join();
 }
 
 void test_unblock() {
-    sc::blocking_queue<MyMovableStr> queue{};
+    sc::blocking_queue<my_movable_str> queue{};
     std::thread consumer([&] {
-        MyMovableStr el{""};
+        my_movable_str el{""};
         bool success = queue.poll(el);
         slassert(!success);
         slassert(el.get_val() == "");
